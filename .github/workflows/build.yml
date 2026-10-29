@@ -48,3 +48,12 @@ jobs:
           releaseBody: 'See the assets to download and install this app.'
           releaseDraft: true
           prerelease: false
+          includeUpdaterJson: false
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ace-60-switcher-windows
+          path: src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error
