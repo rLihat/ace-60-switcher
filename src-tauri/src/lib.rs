@@ -52,9 +52,31 @@ fn import_profile(path: String) -> Result<profiles::ProfileEntry, String> {
 
 #[tauri::command]
 fn apply_profile(id: String) -> Result<String, String> {
-    // TODO: Implement HID communication with Ace 60 Pro
-    // For now, just acknowledge
-    Ok(format!("Applied profile: {}", id))
+    use hidapi::HidApi;
+    
+    let api = HidApi::new().map_err(|e| format!("Failed to init HID: {}", e))?;
+    
+    // Look for Ace 60 Pro (VID: 0x41E4, PID: 0x2113)
+    let mut found = None;
+    for device in api.device_list() {
+        if device.vendor_id() == 0x41E4 && device.product_id() == 0x2113 {
+            found = Some((device.vendor_id(), device.product_id(), device.path().to_string_lossy().to_string()));
+            break;
+        }
+    }
+    
+    match found {
+        Some((vid, pid, path)) => {
+            // Try to open device
+            match api.open(vid, pid) {
+                Ok(_device) => {
+                    Ok(format!("Found and opened Ace 60 Pro (VID:{:04X}, PID:{:04X}) at {}. HID protocol implementation in progress.", vid, pid, path))
+                },
+                Err(e) => Err(format!("Found device but failed to open: {}. Close MCHOSE M Hub and try again.", e))
+            }
+        },
+        None => Err("Ace 60 Pro not found. Make sure it's connected via USB and MCHOSE M Hub is closed.".to_string())
+    }
 }
 
 fn setup_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
@@ -63,6 +85,7 @@ fn setup_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
     let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
     
     let _tray = TrayIconBuilder::new()
+        .icon(app.default_window_icon().cloned().unwrap())
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| match event.id.as_ref() {

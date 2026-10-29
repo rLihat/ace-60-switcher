@@ -26,7 +26,7 @@ tauri-plugin-fs = "2"
 tauri-plugin-store = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-hidapi = { version = "2", features = ["windows-native"] }
+hidapi = "2"
 dirs = "5"
 
 
