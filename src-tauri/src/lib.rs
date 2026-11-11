@@ -51,7 +51,7 @@ fn import_profile(path: String) -> Result<profiles::ProfileEntry, String> {
 }
 
 #[tauri::command]
-fn apply_profile(id: String) -> Result<String, String> {
+fn apply_profile(_id: String) -> Result<String, String> {
     use hidapi::HidApi;
     
     let api = HidApi::new().map_err(|e| format!("Failed to init HID: {}", e))?;
